@@ -1,51 +1,51 @@
 # radiation-sim
 
-Terminalowy symulator promieniowania ciała czarnego zgodnie z **prawem Stefana–Boltzmanna**. Aplikacja CLI oblicza:
-- **moc promieniowania** $P = \sigma\,\varepsilon\,A\,T^{4}$ $[\mathrm{W}]$,
-- **energię wypromieniowaną** w zadanym czasie $E = P \cdot t$ $[\mathrm{J}]$.
+A terminal CLI that simulates blackbody thermal radiation using the **Stefan–Boltzmann law**. The app computes:
+- **Radiated power**: $P = \sigma\,\varepsilon\,A\,T^{4}$ $[\mathrm{W}]$
+- **Energy emitted over time**: $E = P \cdot t$ $[\mathrm{J}]$
 
-> $\sigma = 5.670\,374\,419\times 10^{-8}\ \mathrm{W\,m^{-2}\,K^{-4}}$ — stała Stefana–Boltzmanna (SI).  
-> $\varepsilon$ — emisyjność w zakresie $[0,1]$: 1 dla ciała doskonale czarnego, mniej dla materiałów rzeczywistych.
+> $\sigma = 5.670\,374\,419\times 10^{-8}\ \mathrm{W\,m^{-2}\,K^{-4}}$ — Stefan–Boltzmann constant (SI).  
+> $\varepsilon$ — emissivity in $[0,1]$: 1 for a perfect blackbody; lower for real materials.
 
 ---
 
-## Spis treści
-- [Wymagania](#wymagania)
-- [Instalacja i uruchomienie](#instalacja-i-uruchomienie)
-- [Użycie (CLI)](#użycie-cli)
-- [Przykłady](#przykłady)
-- [Wyjście JSON vs. czytelny tekst](#wyjście-json-vs-czytelny-tekst)
-- [Walidacja i jednostki](#walidacja-i-jednostki)
-- [Co liczy aplikacja — w prostych krokach](#co-liczy-aplikacja--w-prostych-krokach)
-- [Struktura projektu](#struktura-projektu)
-- [Testy i benchmarki](#testy-i-benchmarki)
-- [Ograniczenia modelu i roadmapa](#ograniczenia-modelu-i-roadmapa)
+## Table of Contents
+- [Requirements](#requirements)
+- [Install & Run](#install--run)
+- [CLI Usage](#cli-usage)
+- [Examples](#examples)
+- [Output: JSON vs Pretty](#output-json-vs-pretty)
+- [Validation & Units](#validation--units)
+- [What the App Computes (Step by Step)](#what-the-app-computes-step-by-step)
+- [Project Structure](#project-structure)
+- [Tests & Benchmarks](#tests--benchmarks)
+- [Limitations & Roadmap](#limitations--roadmap)
 - [FAQ](#faq)
-- [Licencja](#licencja)
+- [License](#license)
 
 ---
 
-## Wymagania
+## Requirements
 - **Rust** 1.70+ (edition 2021)
-- System: Linux / macOS / Windows (x86_64)
+- OS: Linux / macOS / Windows (x86_64)
 
 ---
 
-## Instalacja i uruchomienie
+## Install & Run
 
-Sklonuj repo i zbuduj:
+Clone the repo and build:
 
 ```bash
 cargo build
 ```
 
-Uruchom w trybie deweloperskim:
+Run in dev mode:
 
 ```bash
 cargo run -- -T 1000 -A 1.0 -t 5
 ```
 
-Build wydaniowy + uruchomienie binarki:
+Release build + run the binary:
 
 ```bash
 cargo build --release
@@ -57,53 +57,53 @@ cargo build --release
 
 ---
 
-## Użycie (CLI)
+## CLI Usage
 
 ```text
 Usage: radiation-sim [OPTIONS] --temp <K> --area <m2> --time <s>
 
 Options:
-  -T, --temp <K>          Temperatura w Kelvinach (K) > 0
-  -A, --area <m2>         Powierzchnia w m² ≥ 0
-  -t, --time <s>          Czas w sekundach ≥ 0
-  -e, --emis <ε>          Emisyjność w [0,1] (domyślnie: 1.0)
-  -p, --precision <n>     Miejsca po przecinku (0..=10, domyślnie: 3)
-      --output <format>  Format wyjścia: pretty | json (domyślnie: pretty)
-  -h, --help              Pokaż pomoc
-  -V, --version           Wersja programu
+  -T, --temp <K>          Temperature in Kelvin (K) > 0
+  -A, --area <m2>         Surface area in m² ≥ 0
+  -t, --time <s>          Time in seconds ≥ 0
+  -e, --emis <ε>          Emissivity in [0,1] (default: 1.0)
+  -p, --precision <n>     Decimal places (0..=10, default: 3)
+      --output <format>   Output format: pretty | json (default: pretty)
+  -h, --help              Show help
+  -V, --version           Show version
 ```
 
-Szybka pomoc:
+Quick help:
 ```bash
 cargo run -- --help
 ```
 
 ---
 
-## Przykłady
+## Examples
 
-1) **Podstawowy przypadek** (pretty-print):
+1) **Basic case** (pretty print):
 ```bash
 cargo run -- -T 800 -A 0.5 -t 10 -e 0.9 -p 4
 ```
-Przykładowy wynik:
+Sample output:
 ```
 === Stefan–Boltzmann Radiation ===
-Wejście:
+Input:
   T [K]:      800.0000
   A [m²]:     0.5000
   ε [-]:      0.9000
   t [s]:      10.0000
-Wyniki:
+Results:
   P [W]:      10451.6341
   E [J]:      104516.3413
 ```
 
-2) **Wyjście w JSON** (łatwe do dalszej obróbki):
+2) **JSON output** (easy for scripting):
 ```bash
 cargo run -- -T 800 -A 0.5 -t 10 -e 0.9 --output json
 ```
-Wynik:
+Result:
 ```json
 {
   "power_w": 10451.6341291008,
@@ -111,56 +111,58 @@ Wynik:
 }
 ```
 
-3) **Przykład astrofizyczny** (moc gwiazdy traktowanej jak ciało czarne):
+3) **Astrophysics example** (treating a star as a blackbody):
 ```bash
 cargo run --example star
 ```
 
 ---
 
-## Wyjście JSON vs. czytelny tekst
+## Output: JSON vs Pretty
 
-- `--output pretty` – format przyjazny człowiekowi (domyślny).
-- `--output json` – stabilna struktura do parsowania w skryptach/CI.
+- `--output pretty` — human-friendly text (default).
+- `--output json` — stable structure for automation/CI.
 
-Precyzję liczb w trybie `pretty` kontroluje `-p/--precision`.  
-W trybie `json` drukujemy pełen `f64` (umożliwia to dokładne przeliczenia po stronie użytkownika).
-
----
-
-## Walidacja i jednostki
-
-- **Temperatura**: $[\mathrm{K}] > 0$ — *zawsze w Kelvinach!*  
-  Konwersja z °C: $T[\mathrm{K}] = T[^{\circ}\mathrm{C}] + 273.15$
-- **Powierzchnia**: $[\mathrm{m}^2] \ge 0$
-- **Czas**: $[\mathrm{s}] \ge 0$
-- **Emisyjność**: $\varepsilon \in [0,1]$
-
-Jednostki wyników:
-- **Moc** $P$: Waty $[\mathrm{W}]$
-- **Energia** $E$: Dżule $[\mathrm{J}]$ (pamiętaj: $1\,\mathrm{Wh} = 3600\,\mathrm{J}$)
-
-W przypadku danych spoza zakresu aplikacja zwraca czytelny błąd i nie wykonuje obliczeń.
+Decimal precision in `pretty` mode is controlled by `-p/--precision`.  
+In `json` we print the full `f64` to avoid precision loss downstream.
 
 ---
 
-## Co liczy aplikacja — w prostych krokach
+## Validation & Units
 
-Dla podanych $T$, $A$, $\varepsilon$ i $t$:
+- **Temperature**: $[\mathrm{K}] > 0$ — *always in Kelvin!*  
+  Convert from °C: $T[\mathrm{K}] = T[^{\circ}\mathrm{C}] + 273.15$
+- **Area**: $[\mathrm{m}^2] \ge 0$
+- **Time**: $[\mathrm{s}] \ge 0$
+- **Emissivity**: $\varepsilon \in [0,1]$
 
-1. **Gęstość mocy** na $1\,\mathrm{m^2}$: $\sigma\,T^{4}$
-2. **Uwzględnienie materiału**: $\sigma\,\varepsilon\,T^{4}$
-3. **Moc całkowita** dla powierzchni $A$: $$ P = \sigma\,\varepsilon\,A\,T^{4} $$
-4. **Energia w czasie** $t$: $$ E = P \cdot t $$
+Output units:
+- **Power** $P$: watts $[\mathrm{W}]$
+- **Energy** $E$: joules $[\mathrm{J}]$ (remember: $1\,\mathrm{Wh} = 3600\,\mathrm{J}$)
 
-Wnioski:
-- $P$ rośnie **jak $T^{4}$** (np. 2× wyższa $T$ ⇒ ~16× większe $P$)
-- $P$ jest **liniowe** w $A$ i $\varepsilon$
-- $E$ jest **liniowe** w czasie $t$, jeśli $T$ (a więc $P$) jest stałe
+If inputs are out of range, the app prints a clear error and aborts.
 
 ---
 
-## Struktura projektu
+## What the App Computes (Step by Step)
+
+Given $T$, $A$, $\varepsilon$, and $t$:
+
+1. **Power density** per $1\,\mathrm{m^2}$: $\sigma\,T^{4}$
+2. **Material effect**: $\sigma\,\varepsilon\,T^{4}$
+3. **Total power** for area $A$:  
+   $$ P = \sigma\,\varepsilon\,A\,T^{4} $$
+4. **Energy over time** $t$:  
+   $$ E = P \cdot t $$
+
+Implications:
+- $P$ scales as **$T^{4}$** (e.g., doubling $T$ ⇒ $\sim 16\times$ larger $P$)
+- $P$ is **linear** in $A$ and $\varepsilon$
+- $E$ is **linear** in $t$ if $T$ (and thus $P$) is constant
+
+---
+
+## Project Structure
 
 ```
 radiation-sim/
@@ -168,78 +170,79 @@ radiation-sim/
 ├─ README.md
 ├─ .gitignore
 ├─ src/
-│  ├─ main.rs        # punkt wejścia CLI: parse -> validate -> sim -> report
-│  ├─ lib.rs         # re-eksport modułów dla tests/examples/benches
-│  ├─ cli.rs         # definicja argumentów (clap)
-│  ├─ physics.rs     # stała σ, wzory: P=σ ε A T^4, E=P·t
-│  ├─ sim.rs         # spina obliczenia i zwraca wynik
-│  ├─ report.rs      # pretty-print i JSON
-│  └─ validate.rs    # walidacja zakresów i normalizacja parametrów
+│  ├─ main.rs        # CLI entry: parse -> validate -> sim -> report
+│  ├─ lib.rs         # re-exports for tests/examples/benches
+│  ├─ cli.rs         # Clap arguments
+│  ├─ physics.rs     # σ constant, formulas: P=σ ε A T^4, E=P·t
+│  ├─ sim.rs         # wiring computations; returns result
+│  ├─ report.rs      # pretty text & JSON printers
+│  └─ validate.rs    # input validation & normalization
 ├─ tests/
-│  ├─ smoke_cli.rs   # testy uruchomienia CLI
-│  └─ physics_spec.rs# testy wzoru (porównanie z SIGMA)
+│  ├─ smoke_cli.rs   # CLI smoke tests
+│  └─ physics_spec.rs# formula tests (against SIGMA)
 ├─ examples/
-│  └─ star.rs        # przykład: luminosity gwiazdy
+│  └─ star.rs        # star luminosity example
 └─ benches/
-   └─ perf.rs        # benchmark funkcji obliczeniowych (criterion)
+   └─ perf.rs        # micro-benchmarks (criterion)
 ```
 
 ---
 
-## Testy i benchmarki
+## Tests & Benchmarks
 
-Uruchom wszystkie testy:
+Run all tests:
 ```bash
 cargo test
 ```
 
-Benchmark (wymaga `criterion`):
+Benchmarks (require `criterion`):
 ```bash
 cargo bench
 ```
 
-Przykładowe polecenie do sanity-checku (skalowanie $T^{4}$):
+Quick sanity check (the $T^{4}$ scaling):
 ```bash
 cargo run -- -T 800  -A 0.5 -t 10 -e 0.9
-cargo run -- -T 1600 -A 0.5 -t 10 -e 0.9  # moc ≈ 16× większa
+cargo run -- -T 1600 -A 0.5 -t 10 -e 0.9  # power ≈ 16× larger
 ```
 
 ---
 
-## Ograniczenia modelu i roadmapa
+## Limitations & Roadmap
 
-Obecny model zakłada **stałą temperaturę** w trakcie obliczeń (nie modeluje stygnięcia/przyrostu temperatury). To celowe uproszczenie, dzięki któremu:
-- obliczenia są natychmiastowe,
-- wynik energii w czasie jest po prostu $E = P \cdot t$.
+The current model assumes **constant temperature** during the calculation (no cooling/heating dynamics). This deliberate simplification means:
+- instant computations,
+- energy over time is simply $E = P \cdot t$.
 
-**Potencjalne rozszerzenia:**
-- `--sweep` (skanowanie po zakresie $T$ i/lub $A$; eksport CSV)
-- tryb `--explain` (druk kolejnych kroków obliczeń)
-- prosty model stygnięcia: równanie $$ m c \frac{dT}{dt} = -\sigma\,\varepsilon\,A\,T^{4} $$
-- dodatkowe formaty wyjścia (CSV, YAML)
-- zakresy i preset-y materiałów (typowe $\varepsilon$ dla metali/ceramik)
-- walidacja jednostek wejściowych i przeliczniki (np. °C → K)
+**Potential extensions:**
+- `--sweep` (scan over $T$ and/or $A$; CSV export)
+- `--explain` (show intermediate math steps)
+- basic cooling model:  
+  $$ m c \frac{dT}{dt} = -\sigma\,\varepsilon\,A\,T^{4} $$
+- more output formats (CSV, YAML)
+- material presets (typical $\varepsilon$ values)
+- unit converters (e.g., °C → K)
 
 ---
 
 ## FAQ
 
-**Czy mogę podawać temperaturę w °C?**  
-Nie bezpośrednio. Przelicz na Kelwiny: $T[\mathrm{K}] = T[^{\circ}\mathrm{C}] + 273.15$.
+**Can I enter temperature in °C?**  
+Not directly. Convert to Kelvin: $T[\mathrm{K}] = T[^{\circ}\mathrm{C}] + 273.15$.
 
-**Wyjście „dziwnie duże/małe” — co sprawdzić?**  
-Najpierw jednostki: $T$ w **K**, $A$ w **m²**, $t$ w **s**, $\varepsilon \in [0,1]$.  
-Pamiętaj: $P \sim T^{4}$ — niewielka zmiana $T$ mocno wpływa na wynik.
+**Results look too big/small — what to check?**  
+Units first: $T$ in **K**, $A$ in **m²**, $t$ in **s**, $\varepsilon \in [0,1]$.  
+Remember: $P \sim T^{4}$ — small $T$ changes have large effects.
 
-**Czy uwzględniacie otoczenie/pochłanianie?**  
-Nie. To prosty model: izolowane ciało, emisja „w próżnię”.
+**Do you account for surroundings/absorption?**  
+No. Simple model: isolated body radiating to space.
 
-**Dlaczego JSON drukuje pełne `f64`?**  
-By nie tracić informacji przy dalszym przetwarzaniu. W trybie `pretty` możesz kontrolować precyzję `-p`.
+**Why does JSON print full `f64`?**  
+To avoid precision loss in downstream processing. In `pretty` mode use `-p` to control decimals.
 
 ---
 
-## Licencja
+## License
 
 Dual-licensed: **MIT** OR **Apache-2.0**.  
-Wybierz jedną z licencji zgodnie z własnymi potrzebami.
+Choose either license to suit your needs.
